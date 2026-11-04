@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PratooIA</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0d1512;color:#f4f7f4;font-family:Arial,sans-serif;padding:20px}
+main{max-width:600px;margin:auto}
+h1 span{color:#a8f06a}
+.card{background:#17231e;border:1px solid #304138;border-radius:18px;padding:20px;margin:20px 0}
+p{color:#a7b5ac;line-height:1.5}
+.upload{display:block;padding:35px 15px;text-align:center;border:2px dashed #63834d;border-radius:15px;cursor:pointer}
+input[type=file]{display:none}
+img{width:100%;max-height:300px;object-fit:cover;border-radius:12px;margin-top:15px;display:none}
+button{width:100%;padding:15px;background:#a8f06a;color:#14200f;border:0;border-radius:12px;font-size:16px;font-weight:bold;margin-top:15px}
+button:disabled{opacity:.5}
+#result{white-space:pre-wrap;line-height:1.6}
+</style>
+</head>
+<body>
+<main>
+<h1>🥑 Prato<span>IA</span></h1>
+<p>Descubra as calorias e os nutrientes da sua refeição usando inteligência artificial.</p>
+
+<section class="card">
+<h2>📸 Fotografe sua refeição</h2>
+<p>Escolha uma foto da galeria ou tire uma foto agora.</p>
+<label class="upload" for="photo">
+📷<br><br><strong>Toque para adicionar uma foto</strong>
+<input id="photo" type="file" accept="image/*" capture="environment">
+</label>
+<img id="preview" alt="Foto da refeição">
+<button id="analyze">Analisar minha refeição</button>
+<p id="status"></p>
+</section>
+
+<section class="card">
+<h2>Resultado da análise</h2>
+<div id="result">Sua análise aparecerá aqui.</div>
+</section>
+</main>
+
+<script>
+const photo=document.getElementById("photo");
+const preview=document.getElementById("preview");
+const button=document.getElementById("analyze");
+const status=document.getElementById("status");
+const result=document.getElementById("result");
+let image="";
+
+photo.addEventListener("change",()=>{
+ const file=photo.files[0];
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+ image=reader.result;
+ preview.src=image;
+ preview.style.display="block";
+ };
+ reader.readAsDataURL(file);
+});
+
+button.addEventListener("click",async()=>{
+ if(!image){
+ status.textContent="Escolha uma foto primeiro.";
+ return;
+ }
+ button.disabled=true;
+ status.textContent="Analisando sua refeição...";
+ result.textContent="";
+ try{
+ const response=await fetch("/.netlify/functions/analyze",{
+ method:"POST",
+ headers:{"Content-Type":"application/json"},
+ body:JSON.stringify({image})
+ });
+ const data=await response.json();
+ if(!response.ok)throw new Error(data.error||"Erro na análise.");
+ result.textContent=data.result||"Não foi possível obter o resultado.";
+ status.textContent="Análise concluída!";
+ }catch(error){
+ status.textContent="Não foi possível analisar.";
+ result.textContent=error.message;
+ }
+ button.disabled=false;
+});
+</script>
+</body>
+</html>
